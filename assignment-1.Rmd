@@ -1,6 +1,6 @@
 ---
 title: "Assignment 1 - The tidyverse"
-author: "FILL IN YOUR FULL NAME"
+author: "Finn Krueger"
 date: "`r format(Sys.time(), '%B %d, %Y | %H:%M:%S | %Z')`"
 output:
   html_document:
@@ -30,7 +30,14 @@ knitr::opts_chunk$set(echo = TRUE,
 ***
 
 ```{r, include = T}
-# LOAD THE PACKAGES YOU ARE USING IN THIS CODE CHUNK library(nameofpackage)
+library(tidyr)
+library(dplyr)
+library(legislatoR)
+library(tibble)
+library(lubridate)
+library(stringi)
+library(stringr)
+library(ggplot2)
 ```
 
 <br>
@@ -66,31 +73,95 @@ The following tasks will be based on data from the `core` and `political` tables
 a) What's the overall share of male legislators in the entire dataset? [1 point]
 
 ```{r}
-# YOUR CODE HERE
+
+# with overall share I assume that you mean Canada ? 
+canada_house_core <- get_core(legislature = "can")
+
+share_of_male <- canada_house_core %>%
+  filter(sex == 'male')%>%
+  nrow()%>%
+  print()
+
+
+share_of_male / canada_house_core %>%
+  nrow()%>%
+  print()
+  
+  
+
 ```
 
 b) How many (both in absolute and relative terms) legislators died in the same place they were born in? [1 point]
 
 ```{r}
-# YOUR CODE HERE
+
+Birth_equal_death<- canada_house_core%>%
+  filter(birthplace == deathplace)%>%
+  nrow()%>%
+  print()
+  
+Birth_equal_death / nrow(canada_house_core)%>%
+  print()
+
 ```
 
 c) Create a new variable `age_at_death` that reports the age at which legislators died. Then, plot the distribution of that variable for the entire dataset. [2 points]
 
 ```{r}
-# YOUR CODE HERE
+summary(canada_house_core$birth)
+
+
+
+canada_age_at_death <- 
+  canada_house_core %>%
+  filter(!is.na(birth))%>%
+  filter(!is.na(death))%>%
+  mutate(age_at_death = lubridate::interval(birth, death) / years(1))
+
+
+hist(canada_age_at_death$age_at_death, xlab = 'Age of legislator at death')
+
+
+
+
 ```
 
 d) What is the most frequent birthday in your sample (e.g., “January 15")? [2 points]
 
 ```{r}
-# YOUR CODE HERE
+
+birthdates <- format(canada_house_core, format="%m/%d")
+
+
+
+Frequenca <- birthdates %>%
+  filter(!is.na(birth)) %>%
+  group_by(birth) %>%
+  summarise(freq = (n()))%>%
+  arrange(desc(freq))%>%
+  print()
+  
+
+
 ```
 
 e) Generate a table that provides the 5 legislators with the longest names (in terms of number of characters, ignoring whitespace). [2 points]
 
 ```{r}
-# YOUR CODE HERE
+
+legislator <- canada_house_core %>%
+  mutate(longest_name =  str_replace_all(name, " ", ""))  %>%
+  mutate(longest_name =  str_length(longest_name))
+
+table_with_five_legistlators <- legislator %>%
+  slice_max(longest_name, n = 5 )%>%
+  select(name) %>%
+  print()
+
+
+table_with_five_legistlators <-  head(table_with_five_legistlators, n = 5)
+
+print(table_with_five_legistlators)
 ```
 
 <br>
@@ -102,17 +173,60 @@ e) Generate a table that provides the 5 legislators with the longest names (in t
 a) Using data from all sessions, provide a plot that shows the share of male legislators by session! [3 points]
 
 ```{r}
-# YOUR CODE HERE
+can_political <- get_political(legislature = "can")
+glimpse(can_political)
+
+
+canada_political_core <- canada_house_core %>% left_join(can_political, by = "pageid")
+
+
+canada_session <-canada_political_core %>%
+  group_by(session) %>% 
+  mutate(male = (sex == 'male'))  %>% 
+  summarize(male_ratio = mean(male, na.rm = TRUE), 
+            session_transformed = ymd(first(session_start)))
+
+
+plot(canada_session$session_transformed, 
+     canada_session$male_ratio, 
+     ylab = "Share of male legislators", 
+     xlab = "Year",
+     main = "Share of male legislators by session")
+
+
 ```
 
 b) Explore another relation of variables in the dataset. Your analysis should (i) use data from both the `core` and the `political` table and (ii) feature data from several sessions. Also, offer a brief description and interpretation of your findings! [5 points]
 
 ```{r}
-# YOUR CODE HERE
+# I use the already joined dataset canada_political_core <- canada_house_core %>% left_join(can_political, by = "pageid")
+
+ethnicitiy_share <- canada_political_core%>% 
+  filter(!is.na(ethnicity))%>% 
+  group_by(session, ethnicity)%>% 
+    summarise(count = n())  %>%
+    mutate(share_ethnicity = count / sum(count))
+  
+ggplot(ethnicitiy_share, aes(session, share_ethnicity, color = ethnicity)) +
+  geom_point() +
+  labs(title = "Share of ethnic groups per session", 
+       x = "legislative period in sessions", 
+       y = "share in percent")  
+  
+  
+
 ```
 
 <div class = "answer">
-YOUR ANSWER SHOULD GO HERE
+
+In this task, I have investigated the diversity in ethnicity of legislators from all sessions. Particularly, I was interested to answer to what extent the share of other ethnicity than white has risen, since the first session from 1872 to the last session beginning in 2019. 
+
+In the X axis of the plot shows each legislative period in sessions, whereas on the Y axis displays the share of arab, asian, black, hispanic, native and white legislators for the given session. 
+
+Interestingly, you can see that the white legislators are still the heavily dominant ethnicity with  87.5% in the current and last session 43 beginning from 2019. From the 15th session that has started in 1925 up until the 24 session that started in 1958 you can see that the entire legislators were white.
+
+Overall, the overall trend that we can observe is that the parliament is becoming more diverse. This trend holds for the overall increase in the share of legislators not being white, but also by the increasing diversity of different ethnicities of the legislators. 
+
 </div>
 
 <br>
