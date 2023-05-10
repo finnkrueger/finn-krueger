@@ -22,24 +22,7 @@ library(jtools)
 
 setwd('/Users/finnkruger/Documents/Hertie/Masterarbeit/Respog/other')
 
-### levels of democracy
-
-democracy_levels <- read_excel("p5v2018.xls")%>%
-  select(country, year, polity2, democ)%>%
-  rename(country2 = country)
-
-
-democracy_levels$country2 <- democracy_levels$country2%>%
-  case_match("United Kingdom" ~ "Great Britain","Korea South" ~ "South Korea", "Germany West" ~ "Germany", .default = democracy_levels$country2)
-
-
-by <- join_by(year, country2)
-data_master <- left_join(data_master, democracy_levels, by, multiple = "all")
-
-check_dem <- data_master_democ%>%
-  select(country2, polity2, democ)
-
-hist(check_dem$democ)
+### levels 
 
 # Financial Openness 
 my_data <- read_excel("EWN-dataset_12-2022.xlsx",
@@ -79,15 +62,6 @@ table(data_master$wave)
 by <- join_by(year, country2)
 data_master <- left_join(data2, financial_openness, by, multiple = "all")
 
-#####
-
-data_master <- data_master%>%
-  mutate(IIP = 
-    case_when(
-      IIP_GDP > 0 ~ "positive",
-      IIP_GDP < 0 ~ "negative",
-    )
-  )
 
 
 
@@ -215,7 +189,7 @@ rob_se_fun <- function(type) sqrt(diag(vcovCR(original_model, type = type)))
 
 rob_se <- sapply(cstypes, rob_se_fun)
 std_se <- sqrt(diag(vcov(original_model)))
-cbind(std = std_se, rob_se,
+cbind(std = std_se, rob_se_fun,
       merDeriv = sqrt(diag(sand)[1:2]))
 
 coef_test(original_model, vcov = "CR1", p_values = TRUE, test = "naive-t")
@@ -235,7 +209,7 @@ model4 <- lmer(dgentav14 ~ Rich_vs_Poor*Financial_Open_Logged + IIP_GDP +  gent 
 
 ###experimenting with other models 
 
-model5 <- lmer(dgentav14 ~ p05*Financial_Open_Logged + Financial_Open_Logged*p95 +  gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + (1 | country), data = data_master1, REML = FALSE)
+model5 <- lmer(dgentav14 ~ p05*Financial_Open_Logged + Financial_Open_Logged*p95 + IIP_GDP + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + (1 | country), data = data_master1, REML = FALSE)
 
 model7 <- lmer(dgentav14 ~ p05 + p95 + Financial_Open_Logged +  gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + (1 | country), data = data_master1, REML = FALSE)
 
@@ -247,14 +221,17 @@ RSE_Model <- vcovCR(model, type = "CR1")
 RSE_Model2 <- vcovCR(model2, type = "CR1")
 RSE_Model3 <- vcovCR(model3, type = "CR1")
 
+RSE_Model5 <- vcovCR(model5, type = "CR1")
+
 ### Checking models 
 
-coef_test(model2, vcov = "CR1", p_values = TRUE, test = "naive-t", df = 20)
-coef_test(model2, vcov = "CR1", p_values = TRUE, df = 20)
+coef_test(model2, vcov = "CR1", p_values = TRUE)
+coef_test(model2, vcov = "CR1", p_values = TRUE)
 
 
 model_parameters(model, vcov = RSE_Model)
 model_parameters(model2, vcov = RSE_Model2)
+model_parameters(model5, vcov = RSE_Model5)
 
 #### Creating Output table
 
@@ -315,6 +292,7 @@ plot_model(model, type = "int", terms = c("p95", "Financial_Open_Logged"), show.
 
 
 ?plot_model
+plot_model(model2, vcov.fun = RSE_Model2, type = "int", terms = c("p05", "Financial_Open_Logged"))+ geom_rug(alpha = 1/2, position = "jitter")
 plot_model(model2, type = "int", terms = c("p05", "Financial_Open_Logged"))+ geom_rug(alpha = 1/2, position = "jitter")
 
 plot_model(model3, type = "int", terms = c("Financial_Open_Logged", "p50"))+ geom_rug()
