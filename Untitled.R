@@ -200,6 +200,12 @@ coef_test(original_model, vcov = "CR1", p_values = TRUE, test = "naive-t")
 
 model <- lmer(dgentav14 ~ p95*Financial_Open_Logged + IIP_GDP + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + (1 | country), data = data_master1, REML = FALSE)
 
+model_within <- lm(dgentav14 ~ p95*Financial_Open_Logged + IIP_GDP + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + as.factor(country), data = data_master1)
+                
+summary(model_within)
+summary(model)
+summar
+
 model2 <- lmer(dgentav14 ~ p05*Financial_Open_Logged + IIP_GDP + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + (1 | country), data = data_master1, REML = FALSE)
 
 model3 <- lmer(dgentav14 ~ p50*Financial_Open_Logged + IIP_GDP + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + (1 | country), data = data_master1, REML = FALSE)
@@ -225,7 +231,7 @@ RSE_Model5 <- vcovCR(model5, type = "CR1")
 
 ### Checking models 
 
-coef_test(model2, vcov = "CR1", p_values = TRUE)
+coef_test(model_within, vcov = "CR1", p_values = TRUE)
 coef_test(model2, vcov = "CR1", p_values = TRUE)
 
 
@@ -241,9 +247,10 @@ cm <- c('(Intercept)' = 'Intercept',
         'p50' = 'Preferences of the median',
         'Financial_Open_Logged' = 'Logged Financial Openness',
         'IIP_GDP'  = 'International Investment Position',
-        'p95 × Financial_Open_Logged' = 'Preferences P95',
-        'p50 × Financial_Open_Logged' = 'Preferences P50 x Logged Financial Openness')
+        'p95:Financial_Open_Logged' = 'Preferences P95',
+        'p50:Financial_Open_Logged' = 'Preferences P50 x Logged Financial Openness')
 
+summary(model)
 
 modelsummary(model, vcov = RSE_Model, stars = TRUE)
 modelsummary(models1, vcov = vcov, stars = TRUE, coef_map = cm)
