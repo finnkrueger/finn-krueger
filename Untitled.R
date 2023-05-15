@@ -200,11 +200,7 @@ coef_test(original_model, vcov = "CR1", p_values = TRUE, test = "naive-t")
 
 model <- lmer(dgentav14 ~ p95*Financial_Open_Logged + IIP_GDP + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + (1 | country), data = data_master1, REML = FALSE)
 
-model_within <- lm(dgentav14 ~ p95*Financial_Open_Logged + IIP_GDP + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + as.factor(country), data = data_master1)
-                
-summary(model_within)
-summary(model)
-summar
+#model_within <- lm(dgentav14 ~ p95*Financial_Open_Logged + IIP_GDP + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + as.factor(country), data = data_master1)
 
 model2 <- lmer(dgentav14 ~ p05*Financial_Open_Logged + IIP_GDP + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + (1 | country), data = data_master1, REML = FALSE)
 
@@ -248,7 +244,8 @@ cm <- c('(Intercept)' = 'Intercept',
         'Financial_Open_Logged' = 'Logged Financial Openness',
         'IIP_GDP'  = 'International Investment Position',
         'p95:Financial_Open_Logged' = 'Preferences P95',
-        'p50:Financial_Open_Logged' = 'Preferences P50 x Logged Financial Openness')
+        'p50:Financial_Open_Logged' = 'Preferences P50 x Logged Financial Openness',
+        'p05:Financial_Open_Logged' = 'Preferences P05 x Logged Financial Openness')
 
 summary(model)
 
@@ -265,9 +262,11 @@ models1 = list(model, model2, model3)
 ### plot 
 
 plot_predictions(model, rug = TRUE, condition = c("p95", "Financial_Open_Logged"), vcov = RSE_Model)
+plot_predictions(model, rug = TRUE, condition = c("p95", "Financial_Open_Logged"))
+
 plot_predictions(model2, rug = TRUE, condition = c("p05", "Financial_Open_Logged"))
 
-plot_predictions(model4, rug = TRUE, condition = c("Rich_vs_Poor", "Financial_Open_Logged"))
+plot_predictions(model3, rug = TRUE, condition = c("p50", "Financial_Open_Logged"))
 
 
 plot_model(model4, type = "int", terms = c("Rich_vs_Poor", "Financial_Open_Logged"))
@@ -275,13 +274,10 @@ plot_model(model4, type = "int", terms = c("Rich_vs_Poor", "Financial_Open_Logge
 
 plot_predictions(model6, rug = TRUE, condition = c("p95", "Financial_Open_Logged"))
 
-?plot_predictions
 ### Plotting Marginal Means
 
-plot_model(model2, type = 'diag')
 
 #plot_model(model, type = "pred", terms = c("p95", "Financial_Open_Logged"))
-?plot_model
 
 plot_model(model, type = "int", terms = c("p95", "Financial_Open_Logged"), show.data = TRUE, Rug) + 
   geom_point(data = data_master1, aes(x = p95, y = dgentav14, colour = Financial_Open_Logged), inherit.aes = FALSE) +
@@ -295,16 +291,14 @@ plot_model(model2, type = "int", terms = c("p05", "Financial_Open_Logged"), show
 
 
 plot_model(model, type = "int", terms = c("p95", "Financial_Open_Logged"), show.data = TRUE)+ geom_rug(alpha = 1/2, position = "jitter")
+plot_model(model, vcov.fun = RSE_Model, type = "int", terms = c("p95", "Financial_Open_Logged"), show.data = TRUE)+ geom_rug(alpha = 1/2, position = "jitter")
 
 
-
-?plot_model
 plot_model(model2, vcov.fun = RSE_Model2, type = "int", terms = c("p05", "Financial_Open_Logged"))+ geom_rug(alpha = 1/2, position = "jitter")
 plot_model(model2, type = "int", terms = c("p05", "Financial_Open_Logged"))+ geom_rug(alpha = 1/2, position = "jitter")
 
 plot_model(model3, type = "int", terms = c("Financial_Open_Logged", "p50"))+ geom_rug()
 
-plot_model(model3, type = "int", terms = c("Financial_Open_Logged", "p50"))+ geom_rug()
 
 plot_model(model6, type = "int", terms = c("p50", "Financial_Open_Logged"))+ geom_rug()
 
@@ -347,6 +341,7 @@ summary(endogeneity_model)
 
 
 plot_slopes(model, variables = "p95", vcov = RSE_Model, condition = c("Financial_Open_Logged"))
+
 plot_slopes(model, variables = "p95", condition = c("Financial_Open_Logged"))
 
 plot_slopes(model2, variables = "p05", vcov = RSE_Model2, condition = c("Financial_Open_Logged"))
@@ -363,17 +358,10 @@ hist(data_master1$IIP_GDP)
 avg_slopes(model2, variables = "p05", condition = c("Financial_Open_Logged"))
 
 plot_comparisons(model2, variables = "p05", vcov = RSE_Model2, condition = c("Financial_Open_Logged"))
+plot_comparisons(model2, variables = "p05", condition = c("Financial_Open_Logged"))
 
 plot_comparisons(model, variables = "p95",  condition = c("Financial_Open_Logged"))
 
-
-
-p <- comparisons(model, variables = "Financial_Open_Logged",  condition = c("p95"), newdata = datagrid(Financial_Open_Logged = c(1.9, 2)): Financial_Open_Logged)
-
-plot(model)
-
-
-print(p, style = "data.frame")
 
 
 ####
