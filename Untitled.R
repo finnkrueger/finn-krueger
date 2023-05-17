@@ -200,7 +200,7 @@ coef_test(original_model, vcov = "CR1", p_values = TRUE, test = "naive-t")
 
 model <- lmer(dgentav14 ~ p95*Financial_Open_Logged + IIP_GDP + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + (1 | country), data = data_master1, REML = FALSE)
 
-#model_within <- lm(dgentav14 ~ p95*Financial_Open_Logged + IIP_GDP + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + as.factor(country), data = data_master1)
+model_within <- lm(dgentav14 ~ p95*Financial_Open_Logged + IIP_GDP + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + as.factor(country), data = data_master1)
 
 model2 <- lmer(dgentav14 ~ p05*Financial_Open_Logged + IIP_GDP + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + (1 | country), data = data_master1, REML = FALSE)
 
@@ -229,6 +229,8 @@ RSE_Model5 <- vcovCR(model5, type = "CR1")
 
 coef_test(model_within, vcov = "CR1", p_values = TRUE)
 coef_test(model2, vcov = "CR1", p_values = TRUE)
+
+model_parameters(model_within, vcov = RSE_Model)
 
 
 model_parameters(model, vcov = RSE_Model)
@@ -264,7 +266,7 @@ models1 = list(model, model2, model3)
 plot_predictions(model, rug = TRUE, condition = c("p95", "Financial_Open_Logged"), vcov = RSE_Model)
 plot_predictions(model, rug = TRUE, condition = c("p95", "Financial_Open_Logged"))
 
-plot_predictions(model2, rug = TRUE, condition = c("p05", "Financial_Open_Logged"))
+plot_predictions(model2, rug = TRUE, condition = c("p05", "Financial_Open_Logged"), , vcov = RSE_Model2)
 
 plot_predictions(model3, rug = TRUE, condition = c("p50", "Financial_Open_Logged"))
 
@@ -288,6 +290,8 @@ plot_model(model2, type = "int", terms = c("p05", "Financial_Open_Logged"), show
   scale_fill_gradient2("Financial_Open_Logged", limits = c(2, 2.5), 
                        low = "#762A83", mid = "white", high = "#1B7837") 
 
+
+###partial regression plot -> added variable plot. 
 
 
 plot_model(model, type = "int", terms = c("p95", "Financial_Open_Logged"), show.data = TRUE)+ geom_rug(alpha = 1/2, position = "jitter")
