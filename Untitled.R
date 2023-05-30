@@ -237,6 +237,8 @@ model_parameters(model, vcov = RSE_Model)
 model_parameters(model2, vcov = RSE_Model2)
 model_parameters(model5, vcov = RSE_Model5)
 
+unique(data_master1$country)
+
 #### Creating Output table
 
 cm <- c('(Intercept)' = 'Intercept',
