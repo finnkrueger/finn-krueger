@@ -18,7 +18,8 @@ library(merDeriv)
 library(modelsummary)
 library(jtools)
 library(vtable)
-
+library(kableExtra)
+library(flextable)
 
 
 ??robustlmm
@@ -113,31 +114,44 @@ checking2_foreign <-data_master%>%
 
 ### logging financial data
 
+data_master$Financial_Open <- data_master$Financial_Open*100
+
+data_master %>%
+  filter(!is.na(p95))
 
 data_master$Financial_Open_Logged <- log(data_master$Financial_Open)
 data_master$Foreign_share_logged <- log(data_master$Foreign_share)
 
-
-
+data_master1 <- data_master%>%
+  filter(!is.na(dgentav14))
 
 ##### GRAPHS
 
 ### Histogram on capital mobility
 
-ggplot(data_master1, aes(Financial_Open)) +
+## create theme for graphs
+My_Theme = theme(
+  plot.title = element_text(size=26),
+  axis.title.x = element_text(size = 18),
+  axis.text.x = element_text(size = 14),
+  axis.text.y = element_text(size = 14),
+  axis.title.y = element_text(size = 18),
+  plot.caption = element_text(size= 12),)
+
+
+ggplot(data_master, aes(Financial_Open)) +
   geom_histogram(color = "#000000", fill = "#0099F8", breaks = c(0,100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600)) +
   geom_vline(aes(xintercept = median(Financial_Open)), color = "#000000", size = 0.75) +
   scale_x_continuous(breaks=c(0,100,200,300,400,500,1000,2000, 2600)) +
-  labs(caption = "Figure 2: Distribution of Capital Mobility (Source: External Wealth of Nation Database)")+
-  xlab('Capital Mobility (as a share of GDP)')
+  labs(title = 'Distribution of Capital Mobility between 1985 and 2008'
+    ,caption = "Figure 2: Distribution of Capital Mobility (Source: External Wealth of Nation Database)")+
+  xlab('Capital Mobility (as a share of GDP)')+ 
+  My_Theme
   
 ### summary statistics
 
-?vtable
-
-
 summary_stats <-  data_master1%>%
-  select(p05,p50,p95,dgentav14,gent,Financial_Open_Logged,IIP_GDP,loggdpt,growtht,unempt,topic,country)
+  select(p05,p50,p95,dgentav14,gent,Financial_Open_Logged,IIP_GDP,loggdpt,growtht,unempt)
 
 var.labs <- data.frame(var = c('p05','p50',
                                'p95','dgentav14','gent',
@@ -146,39 +160,45 @@ var.labs <- data.frame(var = c('p05','p50',
                                   'Preferences of the Median',
                                   'Preferences of the top 5%',
                                   'Averange Change in Welfare Generosity',
-                                  'TotalWelfare Generosity',
+                                  'Total Welfare Generosity',
                                   'Captial Mobility Logged',
-                                  'Net international investment Position (% of GDP)',
+                                  'Net international investment Position (%GDP)',
                                   'Logged GDP',
-                                  'GDP growth',
-                                  'Unemployment'
+                                  'GDP growth (%)',
+                                  'Unemployment (%)'
                                 ))
 
+datasummary_skim(summary_stats)
 
-st(summary_stats, labels = var.labs, title = 'Table 1: Summary Statistics')
-
-
-### Taking care of Outliers 
-
-data_master1 <- data_master1%>%
-  filter(Financial_Open <= 10)
+datasummary(summary_stats)
+?
 
 
-data_master1$Financial_Open
 
-unique(data_master1$country2)
+summary_statistics <- st(summary_stats, labels = var.labs, title = 'Table 1: Summary Statistics', out = 'kable', col.width=c(24,rep(10.5,15)))
 
-data_master1 <- data_master1%>%
-  filter(country2 != 'Ireland' & country2 != 'Netherlands')
+summary_statistics%>%
+  kable_styling()%>%
+save_kable(file = 'summary_stats1.html')
 
+?datasummary_correlation
+
+datasummary_correlation(summary_statistics)
+### Taking care of Outlier
 
 data_master1 <- data_master%>%
   filter(!is.na(dgentav14))%>%
   filter(dgentav14 >= -20)
-g
 
-data_master1 <- data_master1%>%
-  filter(IIP == 'positive')
+which(data_master1$dgentav14 <= -20)
+
+ggplot(data_master, aes(dgentav14)) +
+  geom_histogram(color = "#000000", fill = "#0099F8") 
+  geom_vline(aes(xintercept = median(Financial_Open)), color = "#000000", size = 0.75) +
+  scale_x_continuous(breaks=c(0,100,200,300,400,500,1000,2000, 2600)) +
+  labs(title = 'Figure 2: Distribution of Capital Mobility',
+       caption = "Figure 2: Distribution of Capital Mobility (Source: External Wealth of Nation Database)")+
+  xlab('Capital Mobility (as a share of GDP)')
 
 ### Replicate Real but unequal responsiveness
 
@@ -195,6 +215,7 @@ summary(original_model)
 
 model_parameters(original_model)
 
+hist(data_master1$Financial_Open_Logged)
 ### Robust standard errors 
 
 check_heteroskedasticity(original_model)
@@ -242,7 +263,7 @@ RSE_Model5 <- vcovCR(model5, type = "CR1")
 
 ### Checking models 
 
-coef_test(model_within, vcov = "CR1", p_values = TRUE)
+coef_test(model, vcov = "CR1", p_values = TRUE)
 coef_test(model2, vcov = "CR1", p_values = TRUE)
 
 model_parameters(model_within, vcov = RSE_Model)
@@ -261,24 +282,36 @@ countries <- list(unique(data_master1$country))
 
 #### Creating Output table
 
-cm <- c('(Intercept)' = 'Intercept',
-        'p95' = 'Preferences of the richest 5%',
-        'p05'    = 'Preferences of the poorest 5%',
-        'p50' = 'Preferences of the median',
-        'Financial_Open_Logged' = 'Logged Financial Openness',
-        'IIP_GDP'  = 'International Investment Position',
-        'p95:Financial_Open_Logged' = 'Preferences P95',
-        'p50:Financial_Open_Logged' = 'Preferences P50 x Logged Financial Openness',
-        'p05:Financial_Open_Logged' = 'Preferences P05 x Logged Financial Openness')
+cm <- c('p95' = 'Preferences of the richest 5% (P95)',
+        'p05'    = 'Preferences of the poorest 5% (P05)',
+        'p50' = 'Preferences of the median (P50)',
+        'Financial_Open_Logged' = 'Capital Mobility Logged',
+        'IIP_GDP'  = 'Net International Investment Position',
+        'p95:Financial_Open_Logged' = 'Preferences P95 x Capital Mobility Logged',
+        'p50:Financial_Open_Logged' = 'Preferences P50 x Capital Mobility Logged',
+        'p05:Financial_Open_Logged' = 'Preferences P05 x Capital Mobility Logged',
+        'gent' = 'Total Welfare Generosity (t)',
+        'loggdpt' = 'Logged GDP (t)',
+        'growtht' = 'Growth (t)',
+        'unempt' = 'Unemployment (t)',
+        'factor(topic)2' = 'Pension Policy (Reference = Health)',
+        'factor(topic)3' = 'Unemployment Policy (Reference = Health)',
+        'factor(wave)2' = 'Wave 2 (Reference = Wave1)',
+        'factor(wave)3' = 'Wave 3 (Reference = Wave1)',
+        'factor(wave)4' = 'Wave 4 (Reference = Wave1)',
+        '(Intercept)' = 'Intercept')
+      
+  
+  
+full_model_html <- modelsummary(models1, vcov = vcov, stars = TRUE, coef_map = cm, notes = NULL,
+                                title = 'Random Intercept Models of Changes in Welfare State Generosity 
+             (Average Change from T + 1 to T + 4 relative to T).',
+                                output = 'flextable') %>% 
+  save_as_docx(path = "mytable2.docx")
+  
 
-summary(model)
+?kableExtra
 
-modelsummary(model, vcov = RSE_Model, stars = TRUE)
-modelsummary(models1, vcov = vcov, stars = TRUE, coef_map = cm)
-modelsummary(models1, vcov = vcov, stars = TRUE)goo
-
-
-?modelsummary
 
 ### plot 
 
@@ -308,6 +341,12 @@ plot_model(model2, type = "int", terms = c("p05", "Financial_Open_Logged"), show
   geom_point(data = data_master1, aes(x = p05, y = dgentav14, colour = Financial_Open_Logged), inherit.aes = FALSE) +
   scale_fill_gradient2("Financial_Open_Logged", limits = c(2, 2.5), 
                        low = "#762A83", mid = "white", high = "#1B7837") 
+
+plot_model(model3, type = "int", terms = c("p50", "Financial_Open_Logged"), show.data = TRUE, vcov.fun = RSE_Model2) + 
+  geom_point(data = data_master1, aes(x = p50, y = dgentav14, colour = Financial_Open_Logged), inherit.aes = FALSE) +
+  scale_fill_gradient2("Financial_Open_Logged", limits = c(2, 2.5), 
+                       low = "#762A83", mid = "white", high = "#1B7837") 
+
 
 
 ###partial regression plot -> added variable plot. 
@@ -363,11 +402,81 @@ summary(endogeneity_model)
 ## PLOTTING SLOPES AND COMPARISONS MARGINAL EFFECTS 
 
 
-plot_slopes(model, variables = "p95", vcov = RSE_Model, condition = c("Financial_Open_Logged"))
+slopes_p95 <- plot_slopes(model, variables = "p95", vcov = RSE_Model, condition = c("Financial_Open_Logged")) +
+  scale_y_continuous(name = "Coefficient Size",
+                     breaks=c(0.00,0.02,0.04,0.06,0.08),
+                     limits=c(-0.02,0.15)) +
+  scale_x_continuous(name = 'Logged Capital Mobility') +
+  labs(title = "Preferences of the richest 5 %")
 
-plot_slopes(model, variables = "p95", condition = c("Financial_Open_Logged"))
+slopes_p05 <- plot_slopes(model2, variables = "p05", vcov = RSE_Model2, condition = c("Financial_Open_Logged"))+
+  scale_y_continuous(name = "Coefficient Size",
+                     breaks=c(0.00,0.02,0.04,0.06,0.08),
+                     limits=c(-0.02,0.15)) +
+  scale_x_continuous(name = 'Logged Capital Mobility') +
+  labs(title = "Preferences of the poorest 5 %")    
 
-plot_slopes(model2, variables = "p05", vcov = RSE_Model2, condition = c("Financial_Open_Logged"))
+slopes_p50 <- plot_slopes(model3, variables = "p50", vcov = RSE_Model3, condition = c("Financial_Open_Logged"))+
+  scale_y_continuous(name = "Coefficient Size",
+                     breaks=c(0.00,0.02,0.04,0.06,0.08)
+                     limits=c(-0.02,0.15)) +
+  scale_x_continuous(name = 'Logged Capital Mobility')  +
+  labs(title = "Preferences of the poorest 5 %")     
+
+
+
+Two_country <- grid.arrange(slopes_p95, slopes_p05, slopes_p50, nrow = 1,
+                            top = textGrob("Influence of income groups on welfare state changes",gp=gpar(fontsize=20,font=3)),
+                            bottom = textGrob('Figure3: How capital mobility affects the influence of different income groups
+                                              Source: authors elaboration',
+                            gp=gpar(fontsize=8,font=3),x = 0,y = 0.5,just = "left"))                          
+
+
+?plot_slopes
+                                              
+Ireland_Plot <- IPE_Data %>%
+  filter(Country == 'Ireland')%>%
+  ggplot(aes(x=Year)) +
+  scale_x_continuous(breaks=c(1985,1990,2000,2008,2010),
+                     limits=c(1985,2010))+
+  scale_y_continuous(name = "Capital Mobility (Sum of Captial Flows /GDP)",
+                     sec.axis = sec_axis( trans=~.*1, name="Social Expenditure (%GDP)"),
+                     breaks=c(1.00,5.00,10.00,15,20,25),
+                     limits=c(0,35))+
+  geom_point(aes(y=Financial_Open),
+             alpha=0.5,
+             size = 0.5
+             ) +
+  geom_line(aes(y=Financial_Open),
+            alpha=0.5,
+            color = "#69b3a2",
+            size = 0.5
+            ) +
+  geom_point(aes(y=EXPENDITURE/1),
+             alpha=0.5,
+             size = 0.5
+             ) +
+  geom_line(aes(y=EXPENDITURE/1),
+            color = rgb(0.2, 0.6, 0.9, 1)
+            ) +
+  theme_bw() +
+  theme(legend.position="bottom") +
+  ylab("Capital Mobility") +
+  xlab("Year") +
+  labs(title = "Ireland")+
+  theme(
+    axis.title.y = element_text(color = "#69b3a2", size=13),
+    axis.title.y.right = element_text(color = rgb(0.2, 0.6, 0.9, 1), size=13)
+  )                                                
+                                              
+                                              
+                                              
+                                              
+                                              
+                                              
+                                              
+                                              
+
 plot_slopes(model2, variables = "p05", condition = c("Financial_Open_Logged"))
 
 plot_slopes(model3, variables = "p50", condition = c("Financial_Open_Logged"))
