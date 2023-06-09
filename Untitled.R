@@ -378,10 +378,19 @@ plot_model(model, type = "int", terms = c("p95", "Financial_Open_Logged")) +
 
 
 
-### checking for diagnosis 
+### checking for diagnosis of original model
+
+plot_model(original_model, type = "diag", sort.est = '(Intercept)')
+
+### checking for diagnosis of adjusted model 
+
+plot_model(model, type = "diag", sort.est = '(Intercept)')
+
+plot_model(model2, type = "diag", sort.est = '(Intercept)')
+
+plot_model(model3, type = "diag", sort.est = '(Intercept)')
 
 
-plot_model(model, type = "re", terms = c("Financial_Open_Logged"))
 
 plot_model(model, type = "re")
 
@@ -389,7 +398,7 @@ plot_model(model, type = "re")
 plot_model(model2, type = 'slope', terms = c('Financial_Open_Logged')) + geom_rug()
 
 
-plot_model(original_model, type = "diag", sort.est = '(Intercept)')
+
 
 ### checking for endogenetiy 
 endogeneity_model <- lm(p95 ~ Financial_Open_Logged, data = data_master1)
@@ -402,35 +411,52 @@ summary(endogeneity_model)
 ## PLOTTING SLOPES AND COMPARISONS MARGINAL EFFECTS 
 
 
+##theme 
+
+My_Theme_slopes = theme(
+  plot.title = element_text(size=14),
+  axis.title.x = element_text(size = 16),
+  axis.text.x = element_text(size = 14),
+  axis.text.y = element_text(size = 14),
+  axis.title.y = element_text(size = 16),
+  plot.caption = element_text(size= 12),)
+
+
 slopes_p95 <- plot_slopes(model, variables = "p95", vcov = RSE_Model, condition = c("Financial_Open_Logged")) +
   scale_y_continuous(name = "Coefficient Size",
-                     breaks=c(0.00,0.02,0.04,0.06,0.08),
-                     limits=c(-0.02,0.15)) +
+                     breaks=c(0.00,0.02,0.04,0.06,0.08,0.1),
+                     limits=c(-0.05,0.135)) +
   scale_x_continuous(name = 'Logged Capital Mobility') +
-  labs(title = "Preferences of the richest 5 %")
+  labs(title = "Preferences of the richest 5 %") + 
+  My_Theme_slopes
 
 slopes_p05 <- plot_slopes(model2, variables = "p05", vcov = RSE_Model2, condition = c("Financial_Open_Logged"))+
   scale_y_continuous(name = "Coefficient Size",
-                     breaks=c(0.00,0.02,0.04,0.06,0.08),
-                     limits=c(-0.02,0.15)) +
+                     breaks=c(0.00,0.02,0.04,0.06,0.08,0.1),
+                     limits=c(-0.055,0.135)) +
   scale_x_continuous(name = 'Logged Capital Mobility') +
-  labs(title = "Preferences of the poorest 5 %")    
+  labs(title = "Preferences of the poorest 5 %")    + 
+  My_Theme_slopes
 
 slopes_p50 <- plot_slopes(model3, variables = "p50", vcov = RSE_Model3, condition = c("Financial_Open_Logged"))+
   scale_y_continuous(name = "Coefficient Size",
-                     breaks=c(0.00,0.02,0.04,0.06,0.08)
-                     limits=c(-0.02,0.15)) +
+                     breaks=c(0.00,0.02,0.04,0.06,0.08,0.1),
+                     limits=c(-0.05,0.135)) +
   scale_x_continuous(name = 'Logged Capital Mobility')  +
-  labs(title = "Preferences of the poorest 5 %")     
+  labs(title = 'Preferences of the Median')     + 
+  My_Theme_slopes
 
 
 
-Two_country <- grid.arrange(slopes_p95, slopes_p05, slopes_p50, nrow = 1,
+slopes <- grid.arrange(slopes_p95, slopes_p05, slopes_p50, nrow = 1,
                             top = textGrob("Influence of income groups on welfare state changes",gp=gpar(fontsize=20,font=3)),
-                            bottom = textGrob('Figure3: How capital mobility affects the influence of different income groups
-                                              Source: authors elaboration',
-                            gp=gpar(fontsize=8,font=3),x = 0,y = 0.5,just = "left"))                          
+                            bottom = textGrob('Figure3: How capital mobility affects the influence of different income groups // Source: authors elaboration',
+                            gp=gpar(fontsize=15,font=3),x = 0,y = 0.5,just = "left"))  +
+  theme(plot.title = element_text(size=34),
+        plot.caption = element_text(size= 16))
 
+
+?grid.arrange
 
 ?plot_slopes
                                               
