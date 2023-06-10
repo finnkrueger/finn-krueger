@@ -308,7 +308,22 @@ full_model_html <- modelsummary(models1, vcov = vcov, stars = TRUE, coef_map = c
              (Average Change from T + 1 to T + 4 relative to T).',
                                 output = 'flextable') %>% 
   save_as_docx(path = "mytable2.docx")
+
+modelsummary(models1, vcov = vcov, stars = TRUE, coef_map = cm, notes = NULL,
+                                title = 'Random Intercept Models of Changes in Welfare State Generosity 
+             (Average Change from T + 1 to T + 4 relative to T).')
+                                
+
   
+summary(data_master1$IIP_GDP)
+
+data_master1 %>%
+  ggplot(aes(x=Financial_Open, y=Financial_Open_Logged)) +
+  geom_line() +
+  scale_y_continuous(name = "Capital Mobility Logged") +
+  scale_x_continuous(name = 'Capital Mobility (Factor to GDP)')  +
+  labs(title = 'Log transform of Capital Mobility (Factor to GDP)')
+
 
 ?kableExtra
 
@@ -429,6 +444,8 @@ slopes_p95 <- plot_slopes(model, variables = "p95", vcov = RSE_Model, condition 
   scale_x_continuous(name = 'Logged Capital Mobility') +
   labs(title = "Preferences of the richest 5 %") + 
   My_Theme_slopes
+
+?plot_slopes
 
 slopes_p05 <- plot_slopes(model2, variables = "p05", vcov = RSE_Model2, condition = c("Financial_Open_Logged"))+
   scale_y_continuous(name = "Coefficient Size",
