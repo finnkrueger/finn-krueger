@@ -277,7 +277,7 @@ model_parameters(model5, vcov = RSE_Model5)
 vcov = list(RSE_Model, RSE_Model2, RSE_Model3)
 models1 = list(model, model2, model3)
 
-
+d
 countries <- list(unique(data_master1$country))
 
 #### Creating Output table
