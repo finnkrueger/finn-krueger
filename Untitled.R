@@ -25,7 +25,6 @@ library(labelled)
 
 
 
-??robustlmm
 
 setwd('/Users/finnkruger/Documents/Hertie/Masterarbeit/Respog/other')
 
@@ -119,8 +118,6 @@ checking2_foreign <-data_master%>%
 
 data_master$Financial_Open <- data_master$Financial_Open*100
 
-data_master %>%
-  filter(!is.na(p95))
 
 data_master$Financial_Open_Logged <- log(data_master$Financial_Open)
 data_master$Foreign_share_logged <- log(data_master$Foreign_share)
@@ -143,7 +140,9 @@ My_Theme = theme(
   legend.text = element_text(size= 16),
   legend.title = element_text(size= 16))
 
-?theme
+### Create histogram for Capital mobility in percentage
+
+data_master$Financial_Open <- data_master$Financial_Open*100
 
 
 ggplot(data_master, aes(Financial_Open)) +
@@ -154,7 +153,8 @@ ggplot(data_master, aes(Financial_Open)) +
     ,caption = "Figure 2: Distribution of Capital Mobility (Source: External Wealth of Nation Database)")+
   xlab('Capital Mobility (as a share of GDP)')+ 
   My_Theme
-  
+
+data_master$Financial_Open <- data_master$Financial_Open/100  
 ### summary statistics
 
 summary_stats <-  data_master1%>%
@@ -190,7 +190,15 @@ save_kable(file = 'summary_stats1.html')
 
 ?datasummary_correlation
 
-datasummary_correlation(summary_statistics)
+### correlation between preferences
+correlation <- summary_stats%>%
+  select(p95,p05,p50)
+  
+  
+?datasummary_correlation
+
+
+datasummary_correlation(correlation, title = 'Correlation of the Preferences between different income groups', notes = 'P95 = Preferences of the richest 5 percent')
 ### Taking care of Outlier
 
 data_master1 <- data_master%>%
@@ -249,14 +257,6 @@ model2 <- lmer(dgentav14 ~ p05*Financial_Open_Logged + IIP_GDP + gent + loggdpt 
 
 model3 <- lmer(dgentav14 ~ p50*Financial_Open_Logged + IIP_GDP + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + (1 | country), data = data_master1, REML = FALSE)
 
-model4 <- lmer(dgentav14 ~ Rich_vs_Poor*Financial_Open_Logged + IIP_GDP +  gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + (1 | country), data = data_master1, REML = FALSE)
-
-
-###experimenting with other models 
-
-model5 <- lmer(dgentav14 ~ p05*Financial_Open_Logged + Financial_Open_Logged*p95 + IIP_GDP + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + (1 | country), data = data_master1, REML = FALSE)
-
-model7 <- lmer(dgentav14 ~ p05 + p95 + Financial_Open_Logged +  gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + (1 | country), data = data_master1, REML = FALSE)
 
 
 #### Summary of models 
@@ -266,16 +266,8 @@ RSE_Model <- vcovCR(model, type = "CR1")
 RSE_Model2 <- vcovCR(model2, type = "CR1")
 RSE_Model3 <- vcovCR(model3, type = "CR1")
 
-RSE_Model5 <- vcovCR(model5, type = "CR1")
 
 ### Checking models 
-
-coef_test(model, vcov = "CR1", p_values = TRUE)
-coef_test(model2, vcov = "CR1", p_values = TRUE)
-
-model_parameters(model_within, vcov = RSE_Model)
-
-
 model_parameters(model, vcov = RSE_Model)
 model_parameters(model2, vcov = RSE_Model2)
 model_parameters(model5, vcov = RSE_Model5)
@@ -283,9 +275,6 @@ model_parameters(model5, vcov = RSE_Model5)
 
 vcov = list(RSE_Model, RSE_Model2, RSE_Model3)
 models1 = list(model, model2, model3)
-
-d
-countries <- list(unique(data_master1$country))
 
 #### Creating Output table
 
@@ -322,38 +311,23 @@ modelsummary(models1, vcov = vcov, stars = TRUE, coef_map = cm, notes = NULL,
                                 
 
   
-summary(data_master1$IIP_GDP)
+## visualise the log transform for interpretability
 
 data_master1 %>%
   ggplot(aes(x=Financial_Open, y=Financial_Open_Logged)) +
   geom_line() +
   scale_y_continuous(name = "Capital Mobility Logged") +
   scale_x_continuous(name = 'Capital Mobility (Factor to GDP)')  +
-  labs(title = 'Log transform of Capital Mobility (Factor to GDP)')
+  labs(title = 'Log transform of Capital Mobility (Factor to GDP)',
+       caption = 'Figure 6') +
+  My_Theme
 
 
-?kableExtra
 
 
-### plot 
-
-plot_predictions(model, rug = TRUE, condition = c("p95", "Financial_Open_Logged"), vcov = RSE_Model)
-plot_predictions(model, rug = TRUE, condition = c("p95", "Financial_Open_Logged")) + My_Theme
-
-plot_predictions(model2, rug = TRUE, condition = c("p05", "Financial_Open_Logged"), , vcov = RSE_Model2)
-
-plot_predictions(model3, rug = TRUE, condition = c("p50", "Financial_Open_Logged"))
 
 
-plot_model(model4, type = "int", terms = c("Rich_vs_Poor", "Financial_Open_Logged"))
-
-
-plot_predictions(model6, rug = TRUE, condition = c("p95", "Financial_Open_Logged"))
-
-### Plotting Marginal Means
-
-
-#plot_model(model, type = "pred", terms = c("p95", "Financial_Open_Logged"))
+#Plot the model 
 
 predicted_p95 <- plot_model(model, type = "int", terms = c("p95", "Financial_Open_Logged"), show.data = TRUE, vcov.fun = RSE_Model, legend.title="Capital Mobility Logged", title = '') + 
   geom_point(data = data_master1, aes(x = p95, y = dgentav14, colour = Financial_Open_Logged), inherit.aes = FALSE) +
@@ -379,7 +353,7 @@ annotate_figure(predictions,
 
 ###partial regression plot -> added variable plot. 
 
-?set_variable_labels
+
 plot_model(model, type = "int", terms = c("p95", "Financial_Open_Logged"), show.data = TRUE)+ geom_rug(alpha = 1/2, position = "jitter")
 plot_model(model, vcov.fun = RSE_Model, type = "int", terms = c("p95", "Financial_Open_Logged"), show.data = TRUE)+ geom_rug(alpha = 1/2, position = "jitter")
 
@@ -406,21 +380,6 @@ plot_model(model, type = "int", terms = c("p95", "Financial_Open_Logged")) +
 
 
 
-### checking for diagnosis of original model
-
-plot_model(original_model, type = "diag", sort.est = '(Intercept)')
-
-### checking for diagnosis of adjusted model 
-
-plot_model(model, type = "diag", sort.est = '(Intercept)')
-
-plot_model(model2, type = "diag", sort.est = '(Intercept)')
-
-plot_model(model3, type = "diag", sort.est = '(Intercept)')
-
-
-
-plot_model(model, type = "re")
 
 #
 plot_model(model2, type = 'slope', terms = c('Financial_Open_Logged')) + geom_rug()
@@ -429,6 +388,8 @@ plot_model(model2, type = 'slope', terms = c('Financial_Open_Logged')) + geom_ru
 
 
 ### checking for endogenetiy 
+
+
 endogeneity_model <- lm(p95 ~ Financial_Open_Logged, data = data_master1)
 endogeneity_model2 <- lm(dgentav14 ~ Financial_Open_Logged, data = data_master1)
 
@@ -438,8 +399,6 @@ summary(endogeneity_model)
 
 ## PLOTTING SLOPES AND COMPARISONS MARGINAL EFFECTS 
 
-
-##theme 
 
 My_Theme_slopes = theme(
   plot.title = element_text(size=14),
@@ -458,7 +417,6 @@ slopes_p95 <- plot_slopes(model, variables = "p95", vcov = RSE_Model, condition 
   labs(title = "Preferences of the richest 5 %") + 
   My_Theme_slopes
 
-?plot_slopes
 
 slopes_p05 <- plot_slopes(model2, variables = "p05", vcov = RSE_Model2, condition = c("Financial_Open_Logged"))+
   scale_y_continuous(name = "Coefficient Size",
@@ -479,80 +437,91 @@ slopes_p50 <- plot_slopes(model3, variables = "p50", vcov = RSE_Model3, conditio
 
 
 slopes <- grid.arrange(slopes_p95, slopes_p05, slopes_p50, nrow = 1,
-                            top = textGrob("Influence of income groups on welfare state changes",gp=gpar(fontsize=20,font=3)),
-                            bottom = textGrob('Figure3: How capital mobility affects the influence of different income groups |  Source: authors elaboration'))
-                          
-?textGrob
-
+                            top = textGrob("Marginal Slopes of the Preferences dependent on level of Capital Mobility", gp=gpar(fontsize=25,font=8)), 
+                            bottom = textGrob('Figure3: How capital mobility affects the influence of different income groups in determining changes in welfare genersoity |  Source: authors elaboration',hjust=0.85))  + 
+  My_Theme_slopes
+                            
+                                              
 ?grid.arrange
 
-?plot_slopes
-                                              
-Ireland_Plot <- IPE_Data %>%
-  filter(Country == 'Ireland')%>%
-  ggplot(aes(x=Year)) +
-  scale_x_continuous(breaks=c(1985,1990,2000,2008,2010),
-                     limits=c(1985,2010))+
-  scale_y_continuous(name = "Capital Mobility (Sum of Captial Flows /GDP)",
-                     sec.axis = sec_axis( trans=~.*1, name="Social Expenditure (%GDP)"),
-                     breaks=c(1.00,5.00,10.00,15,20,25),
-                     limits=c(0,35))+
-  geom_point(aes(y=Financial_Open),
-             alpha=0.5,
-             size = 0.5
-             ) +
-  geom_line(aes(y=Financial_Open),
-            alpha=0.5,
-            color = "#69b3a2",
-            size = 0.5
-            ) +
-  geom_point(aes(y=EXPENDITURE/1),
-             alpha=0.5,
-             size = 0.5
-             ) +
-  geom_line(aes(y=EXPENDITURE/1),
-            color = rgb(0.2, 0.6, 0.9, 1)
-            ) +
-  theme_bw() +
-  theme(legend.position="bottom") +
-  ylab("Capital Mobility") +
-  xlab("Year") +
-  labs(title = "Ireland")+
-  theme(
-    axis.title.y = element_text(color = "#69b3a2", size=13),
-    axis.title.y.right = element_text(color = rgb(0.2, 0.6, 0.9, 1), size=13)
-  )                                                
-                                              
-                                              
-                                              
-                                              
-                                              
-                                              
-                                              
-                                              
+### checking for diagnosis of original model. 
 
-plot_slopes(model2, variables = "p05", condition = c("Financial_Open_Logged"))
+plot_model(original_model, type = "diag", sort.est = '(Intercept)')
 
-plot_slopes(model3, variables = "p50", condition = c("Financial_Open_Logged"))
+### checking for diagnosis of adjusted model 
 
-plot_slopes(model6, variables = "p95", condition = c("Financial_Open_Logged"))
+plot_model(model, type = "diag", sort.est = '(Intercept)')
 
-hist(data_master1$Financial_Open)
-hist(data_master1$Financial_Open_Logged)
-hist(data_master1$IIP_GDP)
+plot_model(model2, type = "diag", sort.est = '(Intercept)')
 
-avg_slopes(model2, variables = "p05", condition = c("Financial_Open_Logged"))
-
-plot_comparisons(model2, variables = "p05", vcov = RSE_Model2, condition = c("Financial_Open_Logged"))
-plot_comparisons(model2, variables = "p05", condition = c("Financial_Open_Logged"))
-
-plot_comparisons(model, variables = "p95",  condition = c("Financial_Open_Logged"))
+plot_model(model3, type = "diag", sort.est = '(Intercept)')
 
 
 
-####
+plot_model(model, type = "resid")
 
 
-res <- cor(data_master1$dg)
-round(res, 2)
+#############Recreate the Regression including the outlier
+
+
+
+
+outlier_model <- lmer(dgentav14 ~ p95*Financial_Open_Logged + IIP_GDP + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + (1 | country), data = data_master, REML = FALSE)
+
+
+outlier_model2 <- lmer(dgentav14 ~ p05*Financial_Open_Logged + IIP_GDP + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + (1 | country), data = data_master, REML = FALSE)
+
+outlier_model3 <- lmer(dgentav14 ~ p50*Financial_Open_Logged + IIP_GDP + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + (1 | country), data = data_master, REML = FALSE)
+
+
+
+#### Summary of models 
+
+## Robust Standard Erorrs
+RSE_Model_outlier <- vcovCR(outlier_model, type = "CR1")
+RSE_Model_outlier2 <- vcovCR(outlier_model2, type = "CR1")
+RSE_Model_outlier3 <- vcovCR(outlier_model3, type = "CR1")
+
+
+### Checking models 
+model_parameters(outlier_model, vcov = RSE_Model_outlier)
+model_parameters(outlier_model2, vcov = RSE_Model_outlier2)
+model_parameters(outlier_model3, vcov = RSE_Model_outlier3)
+
+
+vcov_outlier = list(RSE_Model, RSE_Model2, RSE_Model3)
+models1_outlier = list(outlier_model, outlier_model2, outlier_model3)
+
+#### Creating Output table
+
+cm <- c('p95' = 'Preferences of the richest 5% (P95)',
+        'p05'    = 'Preferences of the poorest 5% (P05)',
+        'p50' = 'Preferences of the median (P50)',
+        'Financial_Open_Logged' = 'Capital Mobility Logged',
+        'IIP_GDP'  = 'Net International Investment Position',
+        'p95:Financial_Open_Logged' = 'Preferences P95 x Capital Mobility Logged',
+        'p50:Financial_Open_Logged' = 'Preferences P50 x Capital Mobility Logged',
+        'p05:Financial_Open_Logged' = 'Preferences P05 x Capital Mobility Logged',
+        'gent' = 'Total Welfare Generosity (t)',
+        'loggdpt' = 'Logged GDP (t)',
+        'growtht' = 'Growth (t)',
+        'unempt' = 'Unemployment (t)',
+        'factor(topic)2' = 'Pension Policy (Reference = Health)',
+        'factor(topic)3' = 'Unemployment Policy (Reference = Health)',
+        'factor(wave)2' = 'Wave 2 (Reference = Wave1)',
+        'factor(wave)3' = 'Wave 3 (Reference = Wave1)',
+        'factor(wave)4' = 'Wave 4 (Reference = Wave1)',
+        '(Intercept)' = 'Intercept')
+
+
+
+modelsummary(models1_outlier, vcov = vcov_outlier, stars = TRUE, coef_map = cm, notes = NULL,
+                                title = 'Random Intercept Models of Changes in Welfare State Generosity when Outlier included
+             (Average Change from T + 1 to T + 4 relative to T).',
+             output = 'flextable') %>% 
+  save_as_docx(path = "Random_Intercept_Outlier.docx")
+
+
+
+
 
