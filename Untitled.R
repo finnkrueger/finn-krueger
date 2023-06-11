@@ -139,7 +139,11 @@ My_Theme = theme(
   axis.text.x = element_text(size = 14),
   axis.text.y = element_text(size = 14),
   axis.title.y = element_text(size = 18),
-  plot.caption = element_text(size= 12),)
+  plot.caption = element_text(size= 14),
+  legend.text = element_text(size= 16),
+  legend.title = element_text(size= 16))
+
+?theme
 
 
 ggplot(data_master, aes(Financial_Open)) +
@@ -334,7 +338,7 @@ data_master1 %>%
 ### plot 
 
 plot_predictions(model, rug = TRUE, condition = c("p95", "Financial_Open_Logged"), vcov = RSE_Model)
-plot_predictions(model, rug = TRUE, condition = c("p95", "Financial_Open_Logged"))
+plot_predictions(model, rug = TRUE, condition = c("p95", "Financial_Open_Logged")) + My_Theme
 
 plot_predictions(model2, rug = TRUE, condition = c("p05", "Financial_Open_Logged"), , vcov = RSE_Model2)
 
@@ -351,31 +355,31 @@ plot_predictions(model6, rug = TRUE, condition = c("p95", "Financial_Open_Logged
 
 #plot_model(model, type = "pred", terms = c("p95", "Financial_Open_Logged"))
 
-plot_model(model, type = "int", terms = c("p95", "Financial_Open_Logged"), show.data = TRUE, vcov.fun = RSE_Model, legend.title="Capital Mobility Logged") + 
+predicted_p95 <- plot_model(model, type = "int", terms = c("p95", "Financial_Open_Logged"), show.data = TRUE, vcov.fun = RSE_Model, legend.title="Capital Mobility Logged", title = '') + 
   geom_point(data = data_master1, aes(x = p95, y = dgentav14, colour = Financial_Open_Logged), inherit.aes = FALSE) +
-  scale_color_continuous() 
+  scale_color_continuous() + My_Theme
 
-
-plot_model(model2, type = "int", terms = c("p05", "Financial_Open_Logged"), show.data = TRUE, vcov.fun = RSE_Model2, legend.title="Capital Mobility Logged") + 
+predicted_p05 <- plot_model(model2, type = "int", terms = c("p05", "Financial_Open_Logged"), show.data = TRUE, vcov.fun = RSE_Model2, legend.title="Capital Mobility Logged", title = '') + 
   geom_point(data = data_master1, aes(x = p05, y = dgentav14, colour = Financial_Open_Logged), inherit.aes = FALSE)  +
-  scale_color_continuous() 
+  scale_color_continuous() + My_Theme
 
-plot_model(model3, type = "int", terms = c("p50", "Financial_Open_Logged"), show.data = TRUE, vcov.fun = RSE_Model3, legend.title="Capital Mobility Logged") + 
+predicted_p50 <- plot_model(model3, type = "int", terms = c("p50", "Financial_Open_Logged"), show.data = TRUE, vcov.fun = RSE_Model3, legend.title="Capital Mobility Logged", title = '') + 
   geom_point(data = data_master1, aes(x = p50, y = dgentav14, colour = Financial_Open_Logged), inherit.aes = FALSE)  +
-  scale_color_continuous() 
+  scale_color_continuous() + My_Theme
 
 
-ggarrange(predicted_p05, predicted_p50, predicted_p95, ncol = 3, common.legend = TRUE, legend="bottom")
-                       top = textGrob("Influence of income groups on welfare state changes",gp=gpar(fontsize=20,font=3)),
-                       bottom = textGrob('Figure3: How capital mobility affects the influence of different income groups // Source: authors elaboration',
-                                         gp=gpar(fontsize=15,font=3),x = 0,y = 0.5,just = "left"))  +
-  theme(plot.title = element_text(size=34),
-        plot.caption = element_text(size= 16))
+
+predictions <- ggarrange(predicted_p95, predicted_p05, predicted_p50, ncol = 3, common.legend = TRUE, legend="bottom") 
+  
+                      
+annotate_figure(predictions,
+                top =  text_grob('Predicted Values of Average Change in Generosity (t+1-t+4)', size = 20),
+                bottom = text_grob('Figure 4: Predicted Values of Change in Generosity (data points represent the actual data) | Source: authors elaboration', hjust = 1.1))
 
 
 ###partial regression plot -> added variable plot. 
 
-
+?set_variable_labels
 plot_model(model, type = "int", terms = c("p95", "Financial_Open_Logged"), show.data = TRUE)+ geom_rug(alpha = 1/2, position = "jitter")
 plot_model(model, vcov.fun = RSE_Model, type = "int", terms = c("p95", "Financial_Open_Logged"), show.data = TRUE)+ geom_rug(alpha = 1/2, position = "jitter")
 
@@ -476,11 +480,9 @@ slopes_p50 <- plot_slopes(model3, variables = "p50", vcov = RSE_Model3, conditio
 
 slopes <- grid.arrange(slopes_p95, slopes_p05, slopes_p50, nrow = 1,
                             top = textGrob("Influence of income groups on welfare state changes",gp=gpar(fontsize=20,font=3)),
-                            bottom = textGrob('Figure3: How capital mobility affects the influence of different income groups // Source: authors elaboration',
-                            gp=gpar(fontsize=15,font=3),x = 0,y = 0.5,just = "left"))  +
-  theme(plot.title = element_text(size=34),
-        plot.caption = element_text(size= 16))
-
+                            bottom = textGrob('Figure3: How capital mobility affects the influence of different income groups |  Source: authors elaboration'))
+                          
+?textGrob
 
 ?grid.arrange
 
