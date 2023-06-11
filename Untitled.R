@@ -4,7 +4,8 @@ library(readxl)
 library(nlme)
 library(lme4)
 library(marginaleffects)
-library(sjPlot)
+library(sjPlot) 
+library(sjlabelled)
 library(stargazer)
 library(texreg)
 library(ggplot2)
@@ -20,6 +21,8 @@ library(jtools)
 library(vtable)
 library(kableExtra)
 library(flextable)
+library(labelled)
+
 
 
 ??robustlmm
@@ -348,20 +351,26 @@ plot_predictions(model6, rug = TRUE, condition = c("p95", "Financial_Open_Logged
 
 #plot_model(model, type = "pred", terms = c("p95", "Financial_Open_Logged"))
 
-plot_model(model, type = "int", terms = c("p95", "Financial_Open_Logged"), show.data = TRUE, Rug) + 
+plot_model(model, type = "int", terms = c("p95", "Financial_Open_Logged"), show.data = TRUE, vcov.fun = RSE_Model, legend.title="Capital Mobility Logged") + 
   geom_point(data = data_master1, aes(x = p95, y = dgentav14, colour = Financial_Open_Logged), inherit.aes = FALSE) +
-  scale_color_continuous()
+  scale_color_continuous() 
 
-plot_model(model2, type = "int", terms = c("p05", "Financial_Open_Logged"), show.data = TRUE, vcov.fun = RSE_Model2) + 
-  geom_point(data = data_master1, aes(x = p05, y = dgentav14, colour = Financial_Open_Logged), inherit.aes = FALSE) +
-  scale_fill_gradient2("Financial_Open_Logged", limits = c(2, 2.5), 
-                       low = "#762A83", mid = "white", high = "#1B7837") 
 
-plot_model(model3, type = "int", terms = c("p50", "Financial_Open_Logged"), show.data = TRUE, vcov.fun = RSE_Model2) + 
-  geom_point(data = data_master1, aes(x = p50, y = dgentav14, colour = Financial_Open_Logged), inherit.aes = FALSE) +
-  scale_fill_gradient2("Financial_Open_Logged", limits = c(2, 2.5), 
-                       low = "#762A83", mid = "white", high = "#1B7837") 
+plot_model(model2, type = "int", terms = c("p05", "Financial_Open_Logged"), show.data = TRUE, vcov.fun = RSE_Model2, legend.title="Capital Mobility Logged") + 
+  geom_point(data = data_master1, aes(x = p05, y = dgentav14, colour = Financial_Open_Logged), inherit.aes = FALSE)  +
+  scale_color_continuous() 
 
+plot_model(model3, type = "int", terms = c("p50", "Financial_Open_Logged"), show.data = TRUE, vcov.fun = RSE_Model3, legend.title="Capital Mobility Logged") + 
+  geom_point(data = data_master1, aes(x = p50, y = dgentav14, colour = Financial_Open_Logged), inherit.aes = FALSE)  +
+  scale_color_continuous() 
+
+
+ggarrange(predicted_p05, predicted_p50, predicted_p95, ncol = 3, common.legend = TRUE, legend="bottom")
+                       top = textGrob("Influence of income groups on welfare state changes",gp=gpar(fontsize=20,font=3)),
+                       bottom = textGrob('Figure3: How capital mobility affects the influence of different income groups // Source: authors elaboration',
+                                         gp=gpar(fontsize=15,font=3),x = 0,y = 0.5,just = "left"))  +
+  theme(plot.title = element_text(size=34),
+        plot.caption = element_text(size= 16))
 
 
 ###partial regression plot -> added variable plot. 
