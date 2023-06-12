@@ -391,11 +391,20 @@ plot_model(model2, type = 'slope', terms = c('Financial_Open_Logged')) + geom_ru
 
 
 endogeneity_model <- lm(p95 ~ Financial_Open_Logged, data = data_master1)
-endogeneity_model2 <- lm(dgentav14 ~ Financial_Open_Logged, data = data_master1)
+endogeneity_model2 <- lm(p05 ~ Financial_Open_Logged, data = data_master1)
+endogeneity_model3 <- lm(p50 ~ Financial_Open_Logged, data = data_master1)
 
+endogeneity_models = list(endogeneity_model, endogeneity_model2, endogeneity_model3)
 
 
 summary(endogeneity_model)
+summary(endogeneity_model2)
+summary(endogeneity_model3)
+
+modelsummary(endogeneity_models, stars = TRUE, coef_map = cm, notes = NULL,
+             title = 'Table4: Exogenous Preferences',
+             output = 'flextable')
+
 
 ## PLOTTING SLOPES AND COMPARISONS MARGINAL EFFECTS 
 
