@@ -450,8 +450,7 @@ slopes <- grid.arrange(slopes_p95, slopes_p05, slopes_p50, nrow = 1,
                             bottom = textGrob('Figure3: How capital mobility affects the influence of different income groups in determining changes in welfare genersoity |  Source: authors elaboration',hjust=0.85))  + 
   My_Theme_slopes
                             
-                                              
-?grid.arrange
+
 
 ### checking for diagnosis of original model. 
 
