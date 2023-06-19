@@ -48,9 +48,6 @@ filter(country2 %in% data_master1$country2)
 
 
 
-
-filter
-
 #Rename Entries to Match 
 financial_openness$country2 <- financial_openness$country2%>%
   case_match("United Kingdom" ~ "Great Britain","Korea" ~ "South Korea", .default = financial_openness$country2)
@@ -58,7 +55,6 @@ financial_openness$country2 <- financial_openness$country2%>%
 #### join the data 
 
 data2 <- read_dta('SBH_P&S_Data.dta')
-
 
 data_Schakel <- read_dta('issp.dta')
 colnames(data_Schakel)
@@ -175,12 +171,6 @@ var.labs <- data.frame(var = c('p05','p50',
                                   'Unemployment (%)'
                                 ))
 
-datasummary_skim(summary_stats)
-
-datasummary(summary_stats)
-?
-
-
 
 summary_statistics <- st(summary_stats, labels = var.labs, title = 'Table 1: Summary Statistics', out = 'kable', col.width=c(24,rep(10.5,15)))
 
@@ -188,15 +178,11 @@ summary_statistics%>%
   kable_styling()%>%
 save_kable(file = 'summary_stats1.html')
 
-?datasummary_correlation
 
 ### correlation between preferences
 correlation <- summary_stats%>%
   select(p95,p05,p50)
   
-  
-?datasummary_correlation
-
 
 datasummary_correlation(correlation, title = 'Correlation of the Preferences between different income groups', notes = 'P95 = Preferences of the richest 5 percent')
 ### Taking care of Outlier
@@ -226,11 +212,7 @@ original_model2 <- lmer(dgentav14 ~ p50 + gent + loggdpt + growtht + unempt + fa
 
 original_model3 <- lmer(dgentav14 ~ p05 + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + (1 | country), data = data_master1, REML = FALSE)
 
-summary(original_model)
 
-model_parameters(original_model)
-
-hist(data_master1$Financial_Open_Logged)
 ### Robust standard errors 
 
 check_heteroskedasticity(original_model)
@@ -351,42 +333,6 @@ annotate_figure(predictions,
                 bottom = text_grob('Figure 4: Predicted Values of Change in Generosity (data points represent the actual data) | Source: authors elaboration', hjust = 1.1))
 
 
-###partial regression plot -> added variable plot. 
-
-
-plot_model(model, type = "int", terms = c("p95", "Financial_Open_Logged"), show.data = TRUE)+ geom_rug(alpha = 1/2, position = "jitter")
-plot_model(model, vcov.fun = RSE_Model, type = "int", terms = c("p95", "Financial_Open_Logged"), show.data = TRUE)+ geom_rug(alpha = 1/2, position = "jitter")
-
-
-plot_model(model2, vcov.fun = RSE_Model2, type = "int", terms = c("p05", "Financial_Open_Logged"))+ geom_rug(alpha = 1/2, position = "jitter")
-plot_model(model2, type = "int", terms = c("p05", "Financial_Open_Logged"))+ geom_rug(alpha = 1/2, position = "jitter")
-
-plot_model(model3, type = "int", terms = c("Financial_Open_Logged", "p50"))+ geom_rug()
-
-
-plot_model(model6, type = "int", terms = c("p50", "Financial_Open_Logged"))+ geom_rug()
-
-
-
-#plot_model(model1, type = "pred", terms = c("Financial_Open_Logged", "p05"))
-
-with(data_master1, scatter.smooth(year, dgentav14))
-
-
-hist()
-
-plot_model(model, type = "int", terms = c("p95", "Financial_Open_Logged")) + 
-  geom_rug(data = subset(data_master1, Financial_Open_Logged > 1), aes(x = Financial_Open_Logged,y = dgentav14), color = "black", sides = "b", , inherit.aes = FALSE ) 
-
-
-
-
-#
-plot_model(model2, type = 'slope', terms = c('Financial_Open_Logged')) + geom_rug()
-
-
-
-
 ### checking for endogenetiy 
 
 
@@ -458,7 +404,7 @@ plot_model(original_model, type = "diag", sort.est = '(Intercept)')
 
 ### checking for diagnosis of adjusted model 
 
-plot_model(model, type = "diag", sort.est = '(Intercept)')
+plot_model(model, type = "diag", sort.est = '(Intercept)')    
 
 plot_model(model2, type = "diag", sort.est = '(Intercept)')
 
@@ -480,7 +426,6 @@ outlier_model <- lmer(dgentav14 ~ p95*Financial_Open_Logged + IIP_GDP + gent + l
 outlier_model2 <- lmer(dgentav14 ~ p05*Financial_Open_Logged + IIP_GDP + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + (1 | country), data = data_master, REML = FALSE)
 
 outlier_model3 <- lmer(dgentav14 ~ p50*Financial_Open_Logged + IIP_GDP + gent + loggdpt + growtht + unempt + factor(topic) + factor(wave) + (1 | country), data = data_master, REML = FALSE)
-
 
 
 #### Summary of models 
